@@ -1,5 +1,6 @@
 import pandas as pd
 import functools as ft
+import itertools as it
 
 vowels = pd.read_csv("vowels.csv", index_col="SOUND")
 consonants = pd.read_csv("consonants.csv", index_col="SOUND")
@@ -34,8 +35,8 @@ def get_intersection_and_nat_class(traits, *elems):
     return (proper_int, nat_class)
 
 
-def get_minimized_intersection(traits, *elems):
-    intr, nat_class = get_intersection_and_nat_class(traits, *elems)
+def get_minimized_intersection(traits, intr_and_nat_class):
+    intr, nat_class = intr_and_nat_class[0], intr_and_nat_class[1]
     new_int = intr.copy()
     for val in intr:
         index = new_int.index(val)
@@ -46,11 +47,24 @@ def get_minimized_intersection(traits, *elems):
     return new_int
 
 
-sounds = ["ʃ","ʒ"]
+def get_all_min_intersection(intr_and_nat_class, traits):
+    perms = [list(x) for x in it.permutations(intr_and_nat_class[0])]
+    perms = [get_minimized_intersection(
+        traits, [x, intr_and_nat_class[1]]) for x in perms]
+    for perm in perms:
+        perm.sort(key=lambda a: a[1])
+    perms = list(set(tuple(x) for x in perms))
+    return perms
+
+
+sounds = ["ʃ", "ʒ"]
 intr = get_intersection_and_nat_class(consonants, *sounds)
-min_intr = get_minimized_intersection(consonants, *sounds)
+min_intr = get_all_min_intersection(intr, consonants)
 print(
-    f"Sounds: {sounds}\nNatural Class Intentionally: {intr[0]}\nMinimized Intentional Natural Class: {min_intr}\nNatural Class Extensionally: {intr[1]}")
+    f"Sounds: {sounds}\nNatural Class Intentionally: {intr[0]}\nMinimized Intentional Natural Class(es):")
+for x in min_intr:
+    print(x)
+print(f"Natural Class Extensionally: {intr[1]}")
 
 # intr = [('-',"CORONAL"),("-","VOICED"),("-","STRIDENT")]
 # print(get_nat_class(intr,consonants))
